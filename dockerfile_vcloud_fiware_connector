@@ -1,0 +1,13 @@
+FROM python:3.7.6-slim-buster
+
+RUN apt-get update && \ 
+    apt-get install -y python3-pip && \
+	pip3 install psutil requests aiohttp aiohttp_cors wget paramiko lxml && \ 
+    apt-get purge -y python3-pip && \
+	apt-get autoremove -y && \
+	apt-get clean -y
+	
+COPY [	"./vcloud_fiware_connector.py", \
+		"./var/fiware/" ]
+
+CMD ["python3", "-u", "./var/fiware/vcloud_fiware_connector.py"]

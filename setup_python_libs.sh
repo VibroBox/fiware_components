@@ -18,13 +18,11 @@ PIP_URL=https://bootstrap.pypa.io/get-pip.py
 find ./$PYTHON_DIR/ -type f -name 'python**_pth' -exec sh -c 'x="{}"; mv "$x" "${x%_pth}pth"' \;
 
 
-./$PYTHON_DIR/python.exe -m pip install --upgrade pip
-./$PYTHON_DIR/python.exe -m pip install --upgrade --force-reinstall setuptools
-./$PYTHON_DIR/python.exe -m pip install --upgrade --force-reinstall wheel
-./$PYTHON_DIR/python.exe -m pip install --upgrade --force-reinstall pyinstaller
+./$PYTHON_DIR/python.exe -m pip install --upgrade pip wheel setuptools pyinstaller
 
 ./$PYTHON_DIR/python.exe -m pip install --ignore-installed psutil
 ./$PYTHON_DIR/python.exe -m pip install --ignore-installed requests
+./$PYTHON_DIR/python.exe -m pip install --ignore-installed aiohttp aiohttp_cors
 ./$PYTHON_DIR/python.exe -m pip install --ignore-installed wget
 ./$PYTHON_DIR/python.exe -m pip install --ignore-installed paramiko
 ./$PYTHON_DIR/python.exe -m pip install --ignore-installed lxml

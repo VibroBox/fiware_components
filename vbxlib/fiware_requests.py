@@ -88,7 +88,34 @@ def fiware_set_subscription(host, port):
           },
           "notification": {
             "http": {
-              "url": "http://localhost:5050/v2/notify"
+              "url": "http://draco:5050/v2/notify"
+            }
+          },
+          "throttling": 1
+        }
+    ok_code=201
+    fiware_send_request(name, 'POST', host, port, endpoint, headers, payload, ok_code)
+
+
+def fiware_set_subscription2(host, port):
+    name='set subscription'
+    endpoint='/v2/subscriptions'
+    headers = {'content-type': 'application/json',
+               'fiware-service': 'vibrobox',
+               'fiware-servicepath': '/'}
+    payload = \
+        {
+          "description": "Notify Vcloud Fiware Connector of all context changes",
+          "subject": {
+            "entities": [
+              {
+                "idPattern": ".*"
+              }
+            ]
+          },
+          "notification": {
+            "http": {
+              "url": "http://vcloud-fc:7797/api/v1/notify"
             }
           },
           "throttling": 1

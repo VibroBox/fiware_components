@@ -60,12 +60,15 @@ class vbox_fiware_connector():
 
     def __init__(self, cfg_path=None):
 
-        self.cb_host = 'localhost' # common host
-        self.db_port = '27017' # mongo database
-        self.cb_port = '1026' # orion context broker
-        self.dr_port = '9090' # draco (preserves history)
-        self.iota_port = '4041' # iot-agent: mqtt+json to ngsi converter
-        self.iota_port2 = '7896' # iot-agent: mqtt+json to ngsi converter
+        self.db_host = 'localhost' # common host, MONGODB_HOST env variable
+        self.db_port = '27017' # mongo database, MONGODB_PORT env variable
+        self.cb_host = 'localhost' # common host, CONTEXT_BROKER_HOST env variable
+        self.cb_port = '1026' # common host, CONTEXT_BROKER_PORT env variable
+        self.dr_host = 'localhost' # common host, DRACO_HOST env variable
+        self.dr_port = '9090' # draco (preserves history), DRACO_PORT0 env variable
+        self.iota_host = 'localhost' # common host, IOT_AGENT_HOST env variable
+        self.iota_port0 = '4041' # iot-agent (mqtt+json to ngsi converter), IOT_AGENT_PORT0 env variable
+        self.iota_port1 = '7896' # iot-agent (mqtt+json to ngsi converter), IOT_AGENT_PORT1 env variable
 
         self.root_dir = '.'
         self.data_dir = '.'
@@ -82,8 +85,10 @@ class vbox_fiware_connector():
 
         self.test_mode = True or '--test' in sys.argv
         self.debug_mode = True or '--debug' in sys.argv
-        self.ping_hosts = True or '--ping' in sys.argv
-        self.send_onece = False or wavs_are_in_start_args() 
+        self.ping_hosts = False or '--ping' in sys.argv
+        self.subscribe = False or  '--subscribe' in sys.argv
+        self.subscribe2 = False or  '--subscribe2' in sys.argv
+        self.send_once = False or '--send_once' in sys.argv or wavs_are_in_start_args() 
         self.server_mode = False or '--server' in sys.argv
 
     
@@ -91,22 +96,37 @@ class vbox_fiware_connector():
 
         print('\nINFO: checking fiware components...\n')
 
-        ping_port(self.cb_host, self.db_port)
+        ping_port(self.db_host, self.db_port)
         ping_port(self.cb_host, self.cb_port)
-        ping_port(self.cb_host, self.dr_port)
-        ping_port(self.cb_host, self.iota_port)
+        ping_port(self.dr_host, self.dr_port)
+        ping_port(self.iota_host, self.iota_port0)
         
-        fiware_check_database(self.cb_host, self.db_port);
+        fiware_check_database(self.db_host, self.db_port);
         fiware_check_cbroker(self.cb_host, self.cb_port);
-        fiware_check_draco(self.cb_host, self.dr_port);
-        fiware_check_iotagent(self.cb_host, self.iota_port);
+        fiware_check_draco(self.dr_host, self.dr_port);
+        fiware_check_iotagent(self.iota_host, self.iota_port0);
 
-    def test_all(self):
+    def set_subscription(self):
     
         fiware_set_subscription(self.cb_host, self.cb_port);
         fiware_get_subscription(self.cb_host, self.cb_port);
-        fiware_set_device(self.cb_host, self.iota_port);
-        fiware_set_context(self.cb_host, self.iota_port2);
+
+
+    def set_subscription2(self):
+    
+        fiware_set_subscription2(self.cb_host, self.cb_port);
+        fiware_get_subscription(self.cb_host, self.cb_port);
+
+
+    def set_device(self):
+    
+        fiware_set_device(self.iota_host, self.iota_port0);
+        fiware_set_service(self.iota_host, self.iota_port0);
+
+
+    def send_meta(self):
+    
+        fiware_set_context(self.iota_host, self.iota_port1);
         fiware_get_context(self.cb_host, self.cb_port);
 
 
@@ -118,11 +138,15 @@ if __name__ == '__main__':
         
         if vbox_fc.ping_hosts:
             vbox_fc.ping_remotes()
+            
+        if vbox_fc.subscribe:
+            vbox_fc.set_subscription()
+            vbox_fc.set_device()
+            
+        if vbox_fc.subscribe2:
+            vbox_fc.set_subscription2()
 
-        if vbox_fc.test_mode:
-            vbox_fc.test_all()
-
-        if vbox_fc.send_onece:
+        if vbox_fc.send_once:
             vbox_fc.send_meta()
 
         if vbox_fc.server_mode:
