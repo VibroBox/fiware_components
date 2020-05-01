@@ -14,7 +14,7 @@ PIP_URL=https://bootstrap.pypa.io/get-pip.py
 ./$CURL_DIR/curl.exe $PIP_URL > ./$PYTHON_DIR/get-pip.py
 ./$PYTHON_DIR/python.exe ./$PYTHON_DIR/get-pip.py
 
-# enable current pathes for finding pip module
+# enable current pathes in embedded python for finding pip module
 find ./$PYTHON_DIR/ -type f -name 'python**_pth' -exec sh -c 'x="{}"; mv "$x" "${x%_pth}pth"' \;
 
 

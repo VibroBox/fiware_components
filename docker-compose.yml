@@ -78,7 +78,7 @@ services:
             context: ./
             dockerfile: dockerfile_vcloud_fiware_connector
         volumes:
-            - ./:/var/fiware/:rw
+            - ./:/var/fiware/:rw # this makes /vbxlib/ available
         env_file: .env
         ports:
             - "${VCLOUD_FC_PORT}:${VCLOUD_FC_PORT}"

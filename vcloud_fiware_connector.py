@@ -176,14 +176,33 @@ class vcloud_fiware_connector():
         if 'Content-Type' in request.headers \
                 and 'application/json' in request.headers['Content-Type']:
             request_body_dict = await request.json()
-            text_1 = request_body_dict['data'][0]['Vibro Acceleration RMS']['value']
-            text_2 = request_body_dict['data'][0]['Vibro Acceleration RMS']['type']
-            text_3 = request_body_dict['data'][0]['Archive size']['value']
-            text_4 = request_body_dict['data'][0]['Archive size']['type']
-            text_5 = request_body_dict['data'][0]['Equipment status']['value']
-            text_6 = request_body_dict['data'][0]['Equipment status']['type']
-            text = 'Vibro Acceleration RMS: {} {} \nArchive size: {} {} \nEquipment status: {}'.\
-                format(text_1,text_2,text_3,text_4,text_5)
+
+            texts = [
+                request_body_dict['data'][0]['Record time']['value'],
+                request_body_dict['data'][0]['Record time']['type'],
+                request_body_dict['data'][0]['File id']['value'],
+                request_body_dict['data'][0]['File id']['type'],
+                request_body_dict['data'][0]['File name']['value'],
+                request_body_dict['data'][0]['File name']['type'],
+                request_body_dict['data'][0]['Archive size']['value'],
+                request_body_dict['data'][0]['Archive size']['type'],
+                request_body_dict['data'][0]['Vibro Acceleration RMS']['value'],
+                request_body_dict['data'][0]['Vibro Acceleration RMS']['type'],
+                request_body_dict['data'][0]['Tempeature']['value'],
+                request_body_dict['data'][0]['Tempeature']['type'],
+                request_body_dict['data'][0]['Equipment status']['value'],
+                request_body_dict['data'][0]['Equipment status']['type'],
+                ]
+
+            text  = '\n'
+            text += 'Record date: {}\n'.format(texts[0])
+            text += 'File id: {}\n'.format(texts[2])
+            text += 'File name: {}\n'.format(texts[4])
+            text += 'Archive size: {}\n'.format(texts[6])
+            text += 'Vibro Acceleration RMS: {:.2f} {}\n'.format(float(texts[8]),texts[9])
+            text += 'Tempeature: {} \n'.format('N/A' if texts[10] == 'Fail' else '{} \'C'.format(texts[11]))
+            text += 'Equipment status: {} \n'.format('N/A' if texts[12] == 'N/A' else '{} ({})'.format(texts[12],texts[13]))
+
             print('Json: {}'.format(request_body_dict))
         else:
             request_body_dict = {}

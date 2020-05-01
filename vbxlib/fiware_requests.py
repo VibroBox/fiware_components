@@ -150,10 +150,56 @@ def fiware_set_device(host, port):
                     "entity_name": "customersEquipment",
                     "entity_type": "vibroAccelerationSensor",
                     "attributes": [
-                          { "object_id": "rms", "name": "Vibro Acceleration RMS", "type": "mm/s^2" },
+                          { "object_id": "name", "name": "File name", "type": ".tar.bz2" },
+                          { "object_id": "time", "name": "Record time", "type": "timestamp" },
                           { "object_id": "size", "name": "Archive size", "type": "Mbytes" },
-                          { "object_id": "status", "name": "Equipment status", "type": "subjective estimation" },
+                          { "object_id": "rms", "name": "Vibro Acceleration RMS", "type": "mm/s^2" },
+                          { "object_id": "temp", "name": "Tempeature", "type": "\'C" },
+                          { "object_id": "status", "name": "Equipment status", "type": "(subjective)" },
                           { "object_id": "tree", "name": "metainfo tree test", "type": "test nested metainfo" }
+                    ]
+                }
+            ]
+        }
+    ok_code=201
+    fiware_send_request(name, 'POST', host, port, endpoint, headers, payload, ok_code)
+
+
+def fiware_set_device2(host, port):
+    name='set device'
+    endpoint='/iot/devices'
+    headers = {'content-type': 'application/json',
+               'fiware-service': 'vibrobox',
+               'fiware-servicepath': '/',
+               'Cache-Control': 'no-cache'}
+    payload = \
+        {
+            "devices": [
+                {
+                    "device_id": "sensor03",
+                    "entity_name": "customersEquipment",
+                    "entity_type": "vibroAccelerationSensor",
+                    "attributes": [
+                        {"object_id": "file_name", "name": "File name", "type": "string" },
+                        {"object_id": "file_path", "name": "File path", "type": "string" },
+                        {"object_id": "file_ext", "name": "File extension", "type": "string" },
+                        {"object_id": "file_date", "name": "Record time", "type": "timestamp" },
+                        {"object_id": "file_size", "name": "Archive size", "type": "Mbytes" },
+                        {"object_id": "data_sent", "name": "data_sent", "type": "boolean" },
+                        {"object_id": "meta_generated", "name": "meta_generated", "type": "boolean" },
+                        {"object_id": "meta_published", "name": "meta_published", "type": "boolean" },
+                        {"object_id": "data_processed", "name": "data_processed", "type": "boolean" },
+                        {"object_id": "vbot_published", "name": "vbot_published", "type": "boolean" },
+                        {"object_id": "file_id", "name": "File id", "type": "numeric" },
+                        {"object_id": "file_url", "name": "File url", "type": "url" },
+                        {"object_id": "point_report_url", "name": "Point report url", "type": "url2" },
+                        {"object_id": "equipment_report_url", "name": "Equipment report url", "type": "url" },
+                        {"object_id": "data_rms", "name": "Vibro Acceleration RMS", "type": "mm/s^2" },
+                        {"object_id": "data_temperature", "name": "Tempeature", "type": "C" },
+                        {"object_id": "data_status", "name": "Data status", "type": "subjective" },
+                        {"object_id": "preliminary_status", "name": "Preliminary status", "type": "subjective" },
+                        {"object_id": "point_status", "name": "Point status", "type": "subjective" },
+                        {"object_id": "equipment_status", "name": "Equipment status", "type": "subjective" }
                     ]
                 }
             ]
@@ -183,14 +229,17 @@ def fiware_set_service(host, port):
     fiware_send_request(name, 'POST', host, port, endpoint, headers, payload, ok_code)
 
 
-def fiware_set_context(host, port):
+def fiware_set_context(host, port, path='sensor03', context={}):
     name='set context'
-    endpoint='/iot/json?k=ANYKEY&i=sensor03'
+    endpoint='/iot/json?k={}&i={}'.format('ANYKEY', path)
     headers = {'content-type': 'application/json'}
-    payload = \
+    payload = context if context != {} else \
         {
-            "rms": 78,
+            "name": "file_name.tar.bz2",
+            "time": "123",
             "size": "12.4",
+            "rms": 78,
+            "temp": 26,
             "status": "Not bad",
             "tree": 
                 {
