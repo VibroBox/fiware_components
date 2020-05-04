@@ -58,7 +58,8 @@ from vbxlib.fiware_requests import *
 from vbxlib.network import ping_port as ping_port
 
 # Import replaced wav lib for reading extensible format
-import Lib.wave as wave
+#import Lib.wave as wave
+import wave
 import tarfile, bz2
 import re
 import shutil
@@ -81,7 +82,8 @@ class vbox_fiware_connector():
         self.iota_port1 = '7896' # iot-agent (mqtt+json to ngsi converter), IOT_AGENT_PORT1 env variable
 
         self.root_dir = '.'
-        self.data_dir = '/storage'
+        #self.data_dir = '/storage'
+        self.data_dir = '.'
         self.data_ext = ['.wav', '.wav.bz2', '.tar.bz2']
         self.cfg_name = 'vbox_fc_cfg.json'
         self.log_name = 'vbox_fc_log.txt'
@@ -92,10 +94,10 @@ class vbox_fiware_connector():
         self.test_mode = False or '--test' in sys.argv
         self.debug_mode = True or '--debug' in sys.argv
         self.ping_hosts = False or '--ping' in sys.argv
+        self.unsubscribe = False or  '--unsubscribe' in sys.argv
         self.subscribe = False or  '--subscribe' in sys.argv
         self.subscribe2 = False or  '--subscribe2' in sys.argv
         self.reg_device = False or  '--reg-device' in sys.argv
-        self.reg_device2 = False or  '--reg-device2' in sys.argv
         self.send_once = False or '--send-once' in sys.argv
         self.force_update = False or '--force-update' in sys.argv
         self.server_mode = False or '--server' in sys.argv
@@ -107,14 +109,16 @@ class vbox_fiware_connector():
         host_choices = ['10.8.0.82','localhost']
 
         for host in host_choices:
-            if ping_port(host, self.cb_port, print_out=False):
+            #if ping_port(host, self.cb_port, print_out=False):
+            if ping_port(host, self.cb_port, print_out=True):
                 remote_host = host
                 break
 
         if remote_host is not None:
-            print('INFO: remote host auto-selected: {}'.format(remote_host))
+            print('INFO: context-broker host has been auto-selected: {}'.format(remote_host))
         else:
-            print('ERROR: remote host auto-selection failed!')
+            print('ERROR: context-broker host auto-selection failed!')
+            remote_host = host_choices[0] # DEBUG TEST
             
         return remote_host
 
@@ -132,28 +136,6 @@ class vbox_fiware_connector():
         fiware_check_cbroker(self.cb_host, self.cb_port);
         fiware_check_draco(self.dr_host, self.dr_port);
         fiware_check_iotagent(self.iota_host, self.iota_port0);
-
-    def set_subscription(self):
-    
-        fiware_set_subscription(self.cb_host, self.cb_port);
-        fiware_get_subscription(self.cb_host, self.cb_port);
-
-
-    def set_subscription2(self):
-    
-        fiware_set_subscription2(self.cb_host, self.cb_port);
-        fiware_get_subscription(self.cb_host, self.cb_port);
-
-
-    def set_device(self):
-    
-        fiware_set_device(self.iota_host, self.iota_port0);
-        fiware_set_service(self.iota_host, self.iota_port0);
-
-    def set_device2(self):
-
-        fiware_set_device2(self.iota_host, self.iota_port0);
-        fiware_set_service(self.iota_host, self.iota_port0);
 
 
     def update_metainfo(self, meta_path='', data_paths=[]):
@@ -176,6 +158,7 @@ class vbox_fiware_connector():
                     metainfo = []
 
                 existing_files = []
+                print(data_paths)
                 for d_path in data_paths:
                     if os.path.isdir(d_path):
                         dir_files = [os.path.join(d_path, file) for file in os.listdir(d_path)]
@@ -213,7 +196,7 @@ class vbox_fiware_connector():
                                 print('WARNING: Config file for data {} was not found! Metainfo will not be full.'.format(data_file_path))
                                 package = data_file_name # archive name
                                 sent = 'no' # it is supposed that the file hasn't been sent yet
-                                sensor_temp = 'Fail' # temperature
+                                sensor_temp = 'N/A' # temperature
                                 wav_start_timestamp = None # time of wav record start
                                 file_id = None # id in our database, according to sending order
                                 rawdata = None # wav file name
@@ -324,7 +307,7 @@ class vbox_fiware_connector():
                 fiware_get_context(self.cb_host, self.cb_port)
                 metainfo[i_rec]['meta_published'] = True
                 META_UPDATED = True
-                time.sleep(1) # to avoid too frequent updates missing
+                time.sleep(1) # avoid too frequent updates - cause missing some of them
 
         if META_UPDATED:
             meta_file_path = os.path.join(self.root_dir, self.meta_name)
@@ -353,7 +336,7 @@ class vbox_fiware_connector():
             metainfo = self.update_metainfo(meta_path, data_paths)
 
         elif self.data_is_in_start_args():
-            metainfo = self.update_metainfo(meta_path, data_paths=[sys.argv])
+            metainfo = self.update_metainfo(meta_path, data_paths=sys.argv)
 
         elif os.path.isdir(self.data_dir):
             metainfo = self.update_metainfo(meta_path, data_paths=[self.data_dir])
@@ -369,7 +352,7 @@ class vbox_fiware_connector():
         while True:
 
             if self.data_is_in_start_args():
-                metainfo = self.update_metainfo(data_paths=[sys.argv])
+                metainfo = self.update_metainfo(data_paths=sys.argv)
 
             elif os.path.isdir(self.data_dir):
                 metainfo = self.update_metainfo(data_paths=[self.data_dir])
@@ -379,10 +362,11 @@ class vbox_fiware_connector():
 
             metainfo = self.send_metainfo(metainfo)
 
-            # check new files once a minute
+            # check local storage for new data files once per minute
             time.sleep(60)
 
 
+        
 if __name__ == '__main__':
 
     try:
@@ -392,17 +376,20 @@ if __name__ == '__main__':
         if vbox_fc.ping_hosts:
             vbox_fc.ping_remotes()
             
+        if vbox_fc.unsubscribe:
+            fiware_rem_subscriptions(vbox_fc.cb_host, vbox_fc.cb_port) 
+            
         if vbox_fc.subscribe:
-            vbox_fc.set_subscription()
+            fiware_set_subscription_for_draco(vbox_fc.cb_host, vbox_fc.cb_port)
+            fiware_get_subscriptions(vbox_fc.cb_host, vbox_fc.cb_port)
             
         if vbox_fc.subscribe2:
-            vbox_fc.set_subscription2()
+            fiware_set_subscription_for_vcloud_fc(vbox_fc.cb_host, vbox_fc.cb_port)
+            fiware_get_subscriptions(vbox_fc.cb_host, vbox_fc.cb_port)
 
         if vbox_fc.reg_device:
-            vbox_fc.set_device()
-
-        if vbox_fc.reg_device2:
-            vbox_fc.set_device2()
+            fiware_set_device(vbox_fc.iota_host, vbox_fc.iota_port0)
+            fiware_set_service(vbox_fc.iota_host, vbox_fc.iota_port0)
 
         if vbox_fc.send_once:
             vbox_fc.process_metainfo()
@@ -410,6 +397,12 @@ if __name__ == '__main__':
         if vbox_fc.server_mode:
             vbox_fc.start_server()
 
+    except KeyboardInterrupt:
+        # someone pressed ctr+c
+        print('Keyboard Interrupt (Ctrl+C)')
+
     except Exception as e:
-    
-        print(e)
+        # unknown exception
+        print('ERROR: {}\nDEBUG:\n'.format(e))
+        import sys, traceback
+        print(traceback.print_exc(file=sys.stdout))

@@ -76,7 +76,7 @@ services:
             - orion
         build: 
             context: ./
-            dockerfile: dockerfile_vcloud_fiware_connector
+            dockerfile: dockerfile_vcloud_fiware_connector_run
         volumes:
             - ./:/var/fiware/:rw # this makes /vbxlib/ available
         env_file: .env

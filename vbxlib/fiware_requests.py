@@ -62,15 +62,20 @@ def fiware_send_request(name, reqtype, host, port, endpoint, headers, payload, o
     elif reqtype == 'POST':
         responce = requests.post(url, data=json.dumps(payload), headers=headers)
 
+    elif reqtype == 'DELETE':
+        responce = requests.delete(url, headers=headers)
+
     status_verbal = 'OK' if responce.status_code == ok_code else 'FAIL'
     status_phrase = '\n{} responce is {}:'.format(name, status_verbal)
                     
     print(status_phrase)
     print(responce.status_code)
     print(responce.text if responce.text else 'No payload in responce')    
+    
+    return responce.text
    
    
-def fiware_set_subscription(host, port):
+def fiware_set_subscription_for_draco(host, port):
     name='set subscription'
     endpoint='/v2/subscriptions'
     headers = {'content-type': 'application/json',
@@ -97,7 +102,7 @@ def fiware_set_subscription(host, port):
     fiware_send_request(name, 'POST', host, port, endpoint, headers, payload, ok_code)
 
 
-def fiware_set_subscription2(host, port):
+def fiware_set_subscription_for_vcloud_fc(host, port):
     name='set subscription'
     endpoint='/v2/subscriptions'
     headers = {'content-type': 'application/json',
@@ -124,7 +129,7 @@ def fiware_set_subscription2(host, port):
     fiware_send_request(name, 'POST', host, port, endpoint, headers, payload, ok_code)
 
 
-def fiware_get_subscription(host, port):
+def fiware_get_subscriptions(host, port):
     name='get subscription'
     endpoint='/v2/subscriptions'
     headers = {'accept': 'application/json',
@@ -135,37 +140,24 @@ def fiware_get_subscription(host, port):
     fiware_send_request(name, 'GET', host, port, endpoint, headers, payload, ok_code)
 
 
-def fiware_set_device(host, port):
-    name='set device'
-    endpoint='/iot/devices'
-    headers = {'content-type': 'application/json',
+def fiware_rem_subscriptions(host, port):
+    name='rem subscription'
+    endpoint='/v2/subscriptions'
+    headers = {'accept': 'application/json',
                'fiware-service': 'vibrobox',
-               'fiware-servicepath': '/',
-               'Cache-Control': 'no-cache'}
-    payload = \
-        {
-            "devices": [
-                {
-                    "device_id": "sensor03",
-                    "entity_name": "customersEquipment",
-                    "entity_type": "vibroAccelerationSensor",
-                    "attributes": [
-                          { "object_id": "name", "name": "File name", "type": ".tar.bz2" },
-                          { "object_id": "time", "name": "Record time", "type": "timestamp" },
-                          { "object_id": "size", "name": "Archive size", "type": "Mbytes" },
-                          { "object_id": "rms", "name": "Vibro Acceleration RMS", "type": "mm/s^2" },
-                          { "object_id": "temp", "name": "Tempeature", "type": "\'C" },
-                          { "object_id": "status", "name": "Equipment status", "type": "(subjective)" },
-                          { "object_id": "tree", "name": "metainfo tree test", "type": "test nested metainfo" }
-                    ]
-                }
-            ]
-        }
-    ok_code=201
-    fiware_send_request(name, 'POST', host, port, endpoint, headers, payload, ok_code)
+               'fiware-servicepath': '/'}
+    payload = {}
+    ok_code=200
+    text = fiware_send_request(name, 'GET', host, port, endpoint, headers, payload, ok_code)
+    
+    subscriptions_dict = json.loads(text)
+    for subscription in subscriptions_dict:
+        endpoint='/v2/subscriptions/{}'.format(subscription["id"])
+        ok_code=204
+        text = fiware_send_request(name, 'DELETE', host, port, endpoint, headers, payload, ok_code)
 
 
-def fiware_set_device2(host, port):
+def fiware_set_device(host, port):
     name='set device'
     endpoint='/iot/devices'
     headers = {'content-type': 'application/json',
@@ -235,16 +227,26 @@ def fiware_set_context(host, port, path='sensor03', context={}):
     headers = {'content-type': 'application/json'}
     payload = context if context != {} else \
         {
-            "name": "file_name.tar.bz2",
-            "time": "123",
-            "size": "12.4",
-            "rms": 78,
-            "temp": 26,
-            "status": "Not bad",
-            "tree": 
-                {
-                    "really?":"true"
-                }
+            'file_name': 'iFile.iCh.tar.bz2-or-rawdata.wav.bz2',
+            'file_path': './.',
+            'file_ext': '.tar.bz2',
+            'file_date': '2020-05-01 12:00:00',
+            'file_size': '12.5 MB',
+            'data_sent': False,
+            'meta_generated': False,
+            'meta_published': False,
+            'data_processed': False,
+            'vbot_published': False,
+            'file_id': 12345,
+            'file_url': None,
+            'point_report_url': None,
+            'equipment_report_url': None,
+            'data_rms': 0.0,
+            'data_temperature': 'N/A',
+            'data_status':'N/A',
+            'preliminary_status':'N/A',
+            'point_status':'N/A',
+            'equipment_status':'N/A',
         }
     ok_code=200
     fiware_send_request(name, 'POST', host, port, endpoint, headers, payload, ok_code)

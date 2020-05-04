@@ -1,0 +1,189 @@
+FROM raspbian/jessie
+
+#RUN apt-get update && \ 
+#    apt-get install -y libssl-dev && \
+#    apt-get install -y python3-pip && \
+#   pip3 install --upgrade pip wheel setuptools pyinstaller && \ 
+#   pip3 install requests aiohttp aiohttp_cors && \ 
+#    apt-get purge -y python3-pip && \
+#   apt-get autoremove -y && \
+#   apt-get clean -y
+    
+
+# CONFIG
+
+ENV ROOT_DIR=/var/fiware
+ENV TEMP_DIR=${ROOT_DIR}/temp/
+ENV REMOVE_TEMP_DIR=0 
+
+ENV LIBFFI_VER=libffi-3.3
+ENV LIBFFI_ZIP=${LIBFFI_VER}.tar.gz
+ENV LIBFFI_URL=ftp://sourceware.org/pub/libffi/${LIBFFI_ZIP}
+ENV LIBFFI_SRC=${TEMP_DIR}/${LIBFFI_VER}-src
+ENV LIBFFI_DIR=${ROOT_DIR}/${LIBFFI_VER}-portable
+
+ENV BZIP2_VER=bzip2-latest
+ENV BZIP2_ZIP=${BZIP2_VER}.tar.gz
+ENV BZIP2_URL=https://www.sourceware.org/pub/bzip2/${BZIP2_ZIP}
+ENV BZIP2_SRC=${TEMP_DIR}/${BZIP2_VER}-src
+ENV BZIP2_DIR=${ROOT_DIR}/${BZIP2_VER}-portable
+
+ENV OPENSSL_VER=openssl-1.1.1g
+ENV OPENSSL_ZIP=${OPENSSL_VER}.tar.gz
+ENV OPENSSL_URL=https://www.openssl.org/source/${OPENSSL_ZIP}
+ENV OPENSSL_SRC=${TEMP_DIR}/${OPENSSL_VER}-src
+ENV OPENSSL_DIR=${ROOT_DIR}/${OPENSSL_VER}-portable
+
+ENV PYTHON_VER=Python-3.8.2
+ENV PYTHON_ZIP=${PYTHON_VER}.tgz
+ENV PYTHON_URL=https://www.python.org/ftp/python/3.8.2/${PYTHON_ZIP}
+ENV PYTHON_SRC=${TEMP_DIR}/${PYTHON_VER}-src
+ENV PYTHON_DIR=${ROOT_DIR}/${PYTHON_VER}-portable
+
+
+# Prepare working dirs
+
+RUN mkdir ${ROOT_DIR} && chmod 777 ${ROOT_DIR}
+RUN mkdir ${TEMP_DIR} && chmod 777 ${TEMP_DIR}
+RUN mkdir ${LIBFFI_SRC} && chmod 777 ${LIBFFI_SRC}
+RUN mkdir ${LIBFFI_DIR} && chmod 777 ${LIBFFI_DIR}
+RUN mkdir ${BZIP2_SRC} && chmod 777 ${BZIP2_SRC}
+RUN mkdir ${BZIP2_DIR} && chmod 777 ${BZIP2_DIR}
+RUN mkdir ${OPENSSL_SRC} && chmod 777 ${OPENSSL_SRC}
+RUN mkdir ${OPENSSL_DIR} && chmod 777 ${OPENSSL_DIR}
+RUN mkdir ${PYTHON_SRC} && chmod 777 ${PYTHON_SRC}
+RUN mkdir ${PYTHON_DIR} && chmod 777 ${PYTHON_DIR}
+
+# Install C/C++ compiler environment
+RUN apt-get update && apt upgrade -y 
+RUN apt-get install --reinstall build-essential -y
+RUN apt-get install --reinstall gcc -y
+RUN dpkg-reconfigure build-essential
+RUN dpkg-reconfigure gcc
+RUN apt-get install libffi-dev -y
+RUN apt-get install zlib1g-dev -y
+RUN apt-get install libbz2-dev -y
+
+# and more fixes... (_bz2 post-bundle trouble)
+#RUN libssl-dev # not found
+# cancelled
+#RUN libbz2-dev
+#RUN libreadline-dev 
+#RUN libsqlite3-dev 
+#RUN wget 
+#RUN curl 
+#RUN llvm 
+#RUN libncurses5-dev 
+#RUN libncursesw5-dev
+#RUN xz-utils 
+#RUN tk-dev 
+#RUN liblzma-dev 
+#RUN python-openssl 
+#RUN git
+
+RUN apt-get autoremove -y && apt-get clean -y
+
+
+# Download, build and inslall (portable) Libffi
+
+#RUN cd ${TEMP_DIR} && \ 
+#   wget ${LIBFFI_URL} && \ 
+#   tar xavf ./${LIBFFI_ZIP} -C ${LIBFFI_SRC}
+
+#RUN cd ${LIBFFI_SRC}/${LIBFFI_VER} && \ 
+#   ./configure --prefix=${LIBFFI_DIR}
+    
+#RUN cd ${LIBFFI_SRC}/${LIBFFI_VER} && \ 
+#    make
+    
+#RUN cd ${LIBFFI_SRC}/${LIBFFI_VER} && \ 
+#   make install
+
+
+# Download, build and inslall (portable) BZip2
+
+#RUN cd ${TEMP_DIR} && \
+#    wget ${BZIP2_URL} && \
+#    tar xavf ./${BZIP2_ZIP} -C ${BZIP2_SRC}
+
+#RUN cd ${BZIP2_SRC}/${BZIP2_VER} && \
+#    ./config shared CFLAGS=-fPIC --prefix=${BZIP2_DIR}
+
+#RUN cd ${BZIP2_SRC}/${BZIP2_VER} && \
+#    make
+    
+#RUN cd ${BZIP2_SRC}/${BZIP2_VER} && \
+#    make install
+
+
+# Download, build and inslall (portable) OpenSSL
+
+RUN cd ${TEMP_DIR} && \
+    wget ${OPENSSL_URL} && \
+    tar xavf ./${OPENSSL_ZIP} -C ${OPENSSL_SRC}
+    
+RUN cd ${OPENSSL_SRC}/${OPENSSL_VER} && \
+    ./config shared CFLAGS=-fPIC --prefix=${OPENSSL_DIR} --openssldir=${OPENSSL_DIR}
+
+RUN cd ${OPENSSL_SRC}/${OPENSSL_VER} && \
+    make
+    
+RUN cd ${OPENSSL_SRC}/${OPENSSL_VER} && \
+    make install
+
+
+# Download, build and inslall (portable) Python3
+
+RUN cd ${TEMP_DIR} && \ 
+    wget ${PYTHON_URL} && \ 
+    tar xavf ./${PYTHON_ZIP} -C ${PYTHON_SRC}
+    
+#ENV LD_LIBRARY_PATH=${OPENSSL_DIR}/lib:${LIBFFI_DIR}/lib:${LD_LIBRARY_PATH}
+#ENV LD_LIBRARY_PATH=${PYTHON_DIR}/lib:${OPENSSL_DIR}/lib:${BZIP2_DIR}/lib:${LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=${PYTHON_DIR}/lib:${OPENSSL_DIR}/lib:${LD_LIBRARY_PATH}
+
+RUN cd ${PYTHON_SRC}/${PYTHON_VER} && \ 
+    ./configure CFLAGS="-I${OPENSSL_DIR}/include" LDFLAGS="-L${OPENSSL_DIR}/lib -Wl,-rpath=${PYTHON_DIR}/lib" --enable-shared --prefix=${PYTHON_DIR} --with-openssl=${OPENSSL_DIR}
+#    ./configure CFLAGS="-I${OPENSSL_DIR}/include -I${BZIP2_DIR}/include" LDFLAGS="-L${OPENSSL_DIR}/lib -L${BZIP2_DIR}/lib  -Wl,-rpath=${PYTHON_DIR}/lib" --enable-shared --prefix=${PYTHON_DIR} --with-openssl=${OPENSSL_DIR}
+##! ./configure CFLAGS="-I${OPENSSL_DIR}/include" LDFLAGS="-L${OPENSSL_DIR}/lib" --prefix=${PYTHON_DIR} --with-openssl=${OPENSSL_DIR}
+#   ./configure CFLAGS="-I${LIBFFI_DIR}/include -I${OPENSSL_DIR}/include" LDFLAGS="-L${LIBFFI_DIR}/lib -R${LIBFFI_DIR}/lib -L${OPENSSL_DIR}/lib" --enable-optimizations --prefix=${PYTHON_DIR} --with-openssl=${OPENSSL_DIR} #> ${TEMP_DIR}/make-config-python3.log 2>&1 &
+#    ./configure CFLAGS="-I${LIBFFI_DIR}/include" LDFLAGS="-L${LIBFFI_DIR}/lib" --enable-optimizations --prefix=${PYTHON_DIR} --with-openssl=${OPENSSL_DIR} #> ${TEMP_DIR}/make-config-python3.log 2>&1 &
+
+RUN cd ${PYTHON_SRC}/${PYTHON_VER} && \ 
+    make
+
+RUN cd ${PYTHON_SRC}/${PYTHON_VER} && \ 
+    make install
+
+# Install additional Python3 modules
+
+RUN ${PYTHON_DIR}/bin/python3 -m pip install --upgrade pip
+
+RUN ${PYTHON_DIR}/bin/python3 -m pip install --upgrade wheel setuptools pyinstaller
+
+RUN ${PYTHON_DIR}/bin/python3 -m pip install --ignore-installed requests
+
+RUN ${PYTHON_DIR}/bin/python3 -m pip install --ignore-installed aiohttp aiohttp_cors
+
+#./${PYTHON_DIR}/bin/python3 -m pip install --ignore-installed wget
+#./${PYTHON_DIR}/bin/python3 -m pip install --ignore-installed paramiko
+#./${PYTHON_DIR}/bin/python3 -m pip install --ignore-installed lxml
+#./${PYTHON_DIR}/bin/python3 -m pip install --ignore-installed psutil
+
+
+# Replace orginal wave lib to import wavs in extended format
+
+COPY [ "./vbxlib/replace-python-lib-wave.py", "${PYTHON_DIR}/Lib/" ]
+RUN mv ./var/fiware/Python-3.8.2-portable/Lib/replace-python-lib-wave.py ./var/fiware/Python-3.8.2-portable/Lib/wave.py
+
+
+# Test compiling, run and files writing
+
+#CMD ["/bin/sh", "-c", \
+#     "cd ./var/fiware/temp/ && ./../Python-3.8.2-portable/bin/python3 -u -m PyInstaller ./test.py -F" ]
+
+
+# Compile vbox fiware connector to onefile-executable for raspbian
+
+CMD ["/bin/sh", "-c", \
+     "cd ./var/fiware/temp/ && ./../Python-3.8.2-portable/bin/python3 -u -m PyInstaller ./vbox_fiware_connector.py -F" ]

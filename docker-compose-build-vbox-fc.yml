@@ -1,0 +1,18 @@
+version: "3.1"
+
+services:
+
+    vbox-fc-build:
+        container_name: vbox-fc-build
+        hostname: vbox-fc
+        build:
+            context: ./
+            dockerfile: dockerfile_vbox_fiware_connector_build
+        environment:
+            - "PYTHON_DIR=/usr/bin/python3"
+        volumes:
+            - ./:/var/fiware/temp/:rw
+        networks:
+            - default
+        #command: --bind_ip_all #  "--smallfiles" removed in latest mongo 4.2
+
