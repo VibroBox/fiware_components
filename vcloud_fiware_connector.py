@@ -195,16 +195,17 @@ class vcloud_fiware_connector():
                 request_body_dict['data'][0]['Equipment status']['type'],
                 ]
 
-            tmpr_ptrn = re.compile('^[-+]?[0-9]*[\.|\,]?[0-9]+([eE][-+]?[0-9]+)?$')
-            tmpr_str = 'N/A' if re.match(tmpr_ptrn,texts[10]) is None else '{} \'C'.format(texts[10])
+            float_ptrn = re.compile('^[-+]?[0-9]*[\.|\,]?[0-9]+([eE][-+]?[0-9]+)?$')
+            tmpr_str = 'N/A' if re.match(float_ptrn,texts[10]) is None else '{} \'C'.format(texts[10])
             equp_stat_str = 'N/A' if texts[12] == 'N/A' else '{} ({})'.format(texts[12],texts[13])
+            rms_str = 'N/A' if re.match(float_ptrn,texts[8]) is None else '{:.2f}'.format(float(texts[8]))
             
             text  = '\n'
             text += 'Record date: {}\n'.format(texts[0])
             text += 'File id: {}\n'.format(texts[2])
             text += 'File name: {}\n'.format(texts[4])
             text += 'Archive size: {}\n'.format(texts[6])
-            text += 'Vibro Acceleration RMS: {:.2f} {}\n'.format(float(texts[8]),texts[9])
+            text += 'Vibro Acceleration RMS: {} {}\n'.format(rms_str,texts[9])
             text += 'Tempeature: {} \n'.format(tmpr_str)
             text += 'Equipment status: {} \n'.format(equp_stat_str)
 

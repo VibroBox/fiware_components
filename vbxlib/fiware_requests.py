@@ -19,19 +19,24 @@
 
 """
 import requests, json
+from vbxlib.logging import print_log, datetime_str
 
 def fiware_ping_service(name, host, port, endpoint='', ok_code=200):
-
-    url = 'http://{}:{}{}'.format(host, port, endpoint)
-    responce = requests.get(url)
-    
-    status_verbal = 'OK' if responce.status_code == ok_code else 'FAIL'
-    status_phrase = '\n{} responce is {}:'.format(name, status_verbal)
-                    
-    print(status_phrase)
-    print(responce.status_code)
-    print(responce.text)    
-
+    try:
+        url = 'http://{}:{}{}'.format(host, port, endpoint)
+        responce = requests.get(url)
+        
+        status_verbal = 'OK' if responce.status_code == ok_code else 'FAIL'
+        status_phrase = '\n{} responce is {}:'.format(name, status_verbal)
+                        
+        print(status_phrase)
+        print(responce.status_code)
+        print(responce.text)    
+    except Exception as e:
+        # unknown exception
+        print_log('ERROR: {}\nDEBUG:\n'.format(e))
+        import sys, traceback
+        print(traceback.print_exc(file=sys.stdout))
    
 def fiware_check_database(host, port):
     fiware_ping_service('Mongo DB', host, port, endpoint='')  
@@ -72,7 +77,7 @@ def fiware_send_request(name, reqtype, host, port, endpoint, headers, payload, o
     print(responce.status_code)
     print(responce.text if responce.text else 'No payload in responce')    
     
-    return responce.text
+    return status_verbal, responce.text
    
    
 def fiware_set_subscription_for_draco(host, port):
@@ -148,13 +153,13 @@ def fiware_rem_subscriptions(host, port):
                'fiware-servicepath': '/'}
     payload = {}
     ok_code=200
-    text = fiware_send_request(name, 'GET', host, port, endpoint, headers, payload, ok_code)
+    status, text = fiware_send_request(name, 'GET', host, port, endpoint, headers, payload, ok_code)
     
     subscriptions_dict = json.loads(text)
     for subscription in subscriptions_dict:
         endpoint='/v2/subscriptions/{}'.format(subscription["id"])
         ok_code=204
-        text = fiware_send_request(name, 'DELETE', host, port, endpoint, headers, payload, ok_code)
+        status, text = fiware_send_request(name, 'DELETE', host, port, endpoint, headers, payload, ok_code)
 
 
 def fiware_set_device(host, port):
@@ -249,8 +254,8 @@ def fiware_set_context(host, port, path='sensor03', context={}):
             'equipment_status':'N/A',
         }
     ok_code=200
-    fiware_send_request(name, 'POST', host, port, endpoint, headers, payload, ok_code)
-
+    status, text = fiware_send_request(name, 'POST', host, port, endpoint, headers, payload, ok_code)
+    return status, text
 
 def fiware_get_context(host, port):
     name='get context'
@@ -270,4 +275,5 @@ def fiware_get_context(host, port):
             ]
         }
     ok_code=200
-    fiware_send_request(name, 'POST', host, port, endpoint, headers, payload, ok_code)
+    status, text = fiware_send_request(name, 'POST', host, port, endpoint, headers, payload, ok_code)
+    return status, text
