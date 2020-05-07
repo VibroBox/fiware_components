@@ -21,12 +21,12 @@ ENV PYTHON_DIR=${ROOT_DIR}/${PYTHON_VER}-portable
 
 # Prepare working dirs
 
-RUN mkdir ${ROOT_DIR} && chmod 777 ${ROOT_DIR}
-RUN mkdir ${TEMP_DIR} && chmod 777 ${TEMP_DIR}
-RUN mkdir ${OPENSSL_SRC} && chmod 777 ${OPENSSL_SRC}
-RUN mkdir ${OPENSSL_DIR} && chmod 777 ${OPENSSL_DIR}
-RUN mkdir ${PYTHON_SRC} && chmod 777 ${PYTHON_SRC}
-RUN mkdir ${PYTHON_DIR} && chmod 777 ${PYTHON_DIR}
+RUN mkdir ${ROOT_DIR} && chmod -R 777 ${ROOT_DIR}
+RUN mkdir ${TEMP_DIR} && chmod -R 777 ${TEMP_DIR}
+RUN mkdir ${OPENSSL_SRC} && chmod -R 777 ${OPENSSL_SRC}
+RUN mkdir ${OPENSSL_DIR} && chmod -R 777 ${OPENSSL_DIR}
+RUN mkdir ${PYTHON_SRC} && chmod -R 777 ${PYTHON_SRC}
+RUN mkdir ${PYTHON_DIR} && chmod -R 777 ${PYTHON_DIR}
 
 
 # Install C/C++ compiler environment

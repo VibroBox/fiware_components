@@ -28,15 +28,20 @@ def fiware_ping_service(name, host, port, endpoint='', ok_code=200):
         
         status_verbal = 'OK' if responce.status_code == ok_code else 'FAIL'
         status_phrase = '\n{} responce is {}:'.format(name, status_verbal)
+        responce_text = (responce.text if responce.text else 'No text in responce')
                         
         print(status_phrase)
         print(responce.status_code)
-        print(responce.text)    
+        print(responce_text)    
     except Exception as e:
         # unknown exception
         print_log('ERROR: {}\nDEBUG:\n'.format(e))
         import sys, traceback
         print(traceback.print_exc(file=sys.stdout))
+        status_verbal = 'FAIL'
+        responce_text = 'ERROR: {}'.format(e)
+        
+    return status_verbal, responce_text
    
 def fiware_check_database(host, port):
     fiware_ping_service('Mongo DB', host, port, endpoint='')  
@@ -55,29 +60,37 @@ def fiware_check_iotagent(host, port):
 
 
 def fiware_send_request(name, reqtype, host, port, endpoint, headers, payload, ok_code):
+    try:
+        url = 'http://{}:{}{}'.format(host, port, endpoint)
+        #url = 'https://api.github.com/some/endpoint'
+        #payload = {'some': 'data'}
+        #headers = {'content-type': 'application/json'}
 
-    url = 'http://{}:{}{}'.format(host, port, endpoint)
-    #url = 'https://api.github.com/some/endpoint'
-    #payload = {'some': 'data'}
-    #headers = {'content-type': 'application/json'}
+        if reqtype == 'GET':
+            responce = requests.get(url, headers=headers)
+            
+        elif reqtype == 'POST':
+            responce = requests.post(url, data=json.dumps(payload), headers=headers)
 
-    if reqtype == 'GET':
-        responce = requests.get(url, headers=headers)
+        elif reqtype == 'DELETE':
+            responce = requests.delete(url, headers=headers)
+
+        status_verbal = 'OK' if responce.status_code == ok_code else 'FAIL'
+        status_phrase = '\n{} responce is {}:'.format(name, status_verbal)
+        responce_text = (responce.text if responce.text else 'No text in responce')
+                        
+        print(status_phrase)
+        print(responce.status_code)
+        print(responce_text)    
+    except Exception as e:
+        # unknown exception
+        print_log('ERROR: {}\nDEBUG:\n'.format(e))
+        import sys, traceback
+        print(traceback.print_exc(file=sys.stdout))
+        status_verbal = 'FAIL'
+        responce_text = 'ERROR: {}'.format(e)
         
-    elif reqtype == 'POST':
-        responce = requests.post(url, data=json.dumps(payload), headers=headers)
-
-    elif reqtype == 'DELETE':
-        responce = requests.delete(url, headers=headers)
-
-    status_verbal = 'OK' if responce.status_code == ok_code else 'FAIL'
-    status_phrase = '\n{} responce is {}:'.format(name, status_verbal)
-                    
-    print(status_phrase)
-    print(responce.status_code)
-    print(responce.text if responce.text else 'No payload in responce')    
-    
-    return status_verbal, responce.text
+    return status_verbal, responce_text
    
    
 def fiware_set_subscription_for_draco(host, port):

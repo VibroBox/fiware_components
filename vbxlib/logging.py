@@ -36,7 +36,7 @@ class print_log(metaclass=Singleton):
 
     def __init__(self, *args, **kvargs):
 
-        import time
+        import sys, time
 
         args_list = list(args) + list(kvargs.values())
         prefix_list = ['INFO', 'DEBUG', 'WARNING', 'ERROR', 'EXCEPTION', 'TEST']
@@ -47,7 +47,7 @@ class print_log(metaclass=Singleton):
                 if isinstance(arg, str)):
                 
             if (not hasattr(self, 'last_call_time') \
-                    or self.last_call_time - time.time() > 0.1):
+                    or time.time() - self.last_call_time > 0.1):
             
                 print('\n', datetime_str(), sep='', end='\n')
                 
@@ -60,6 +60,8 @@ class print_log(metaclass=Singleton):
                 print('', sep='', end='\n')
         
         print(*args, **kvargs)
+        
+        sys.stdout.flush()
 
         self.last_call_time = time.time()
         

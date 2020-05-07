@@ -3,7 +3,8 @@
 
 # tested on Win10x64 with GitBash (mingw64)
 # manually download python and curl, 
-# unzip and write down pathes to executables
+# unzip and write down paths to dirs with executables
+# (CURL_DIR for curl.exe and  PYTHON_DIR for python3.exe)
 
 
 CURL_DIR=curl769x86
@@ -20,9 +21,9 @@ find ./$PYTHON_DIR/ -type f -name 'python**_pth' -exec sh -c 'x="{}"; mv "$x" "$
 
 ./$PYTHON_DIR/python.exe -m pip install --upgrade pip wheel setuptools pyinstaller
 
-./$PYTHON_DIR/python.exe -m pip install --ignore-installed psutil
+#./$PYTHON_DIR/python.exe -m pip install --ignore-installed psutil
 ./$PYTHON_DIR/python.exe -m pip install --ignore-installed requests
 ./$PYTHON_DIR/python.exe -m pip install --ignore-installed aiohttp aiohttp_cors
-./$PYTHON_DIR/python.exe -m pip install --ignore-installed wget
-./$PYTHON_DIR/python.exe -m pip install --ignore-installed paramiko
-./$PYTHON_DIR/python.exe -m pip install --ignore-installed lxml
+#./$PYTHON_DIR/python.exe -m pip install --ignore-installed wget
+#./$PYTHON_DIR/python.exe -m pip install --ignore-installed paramiko
+#./$PYTHON_DIR/python.exe -m pip install --ignore-installed lxml

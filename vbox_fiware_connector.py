@@ -63,6 +63,7 @@ import math
 from vbxlib.logging import print_log, datetime_str
 from vbxlib.fiware_requests import *
 from vbxlib.network import ping_port
+
 # replace original wave lib for reading extensible file format
 import vbxlib.replace_python_lib_wave as wave
 
@@ -106,9 +107,10 @@ class vbox_fiware_connector():
         self.log_name = 'vbox_fc_log.txt'
         self.meta_name = 'vbox_fc_meta.json'
         self.sensivity_correction = 0.0001 #0.00010486
+        self.no_new_files = False
 
         is_frozen_msg = 'False' if not getattr(sys, 'frozen', False) else \
-                        'True, sys._MEIPASS == {}'.format(sys._MEIPASS)
+                        'True && sys._MEIPASS == {}'.format(sys._MEIPASS)
 
         print_log('DEBUG: __file__ == {}'.format(__file__))
         print_log('DEBUG: is frozen == {}'.format(is_frozen_msg))
@@ -164,76 +166,94 @@ class vbox_fiware_connector():
     def update_data_list(self, meta_path='', data_paths=[]):
 
             if meta_path != '':
+            
                 if os.path.isdir(os.path.dirname(meta_path)):
+                
                     meta_file_path = os.path.abspath(self.meta_name)
+                    
                 else:
                     meta_file_path = os.path.join(self.root_dir, meta_path)
             else:
                 meta_file_path = os.path.join(self.root_dir, self.meta_name)
 
-            print_log('DEBUG: metainfo file selected {}'.format(meta_file_path))
-            print_log('DEBUG: data paths selected {}'.format(data_paths))
+            if self.args.force_update \
+                    or not (os.path.isfile(meta_file_path) \
+                        and os.stat(meta_file_path).st_size > 0):
+                    
+                print_log('DEBUG: creating new (empty) metainfo file {}'. \
+                    format(meta_file_path))
+                    
+                metainfo = []
+                self.args.force_update = False
+                
+            else:
+            
+                print_log('DEBUG: loading metainfo file {}, size {}'. \
+                    format(meta_file_path, os.stat(meta_file_path).st_size))
 
-            with open(meta_file_path, 'a+', encoding='utf-8') as meta_file_obj:
-
-                META_UPDATED = False
-                if os.stat(meta_file_path).st_size == 0 \
-                        or self.args.force_update:
-                    metainfo = []
-                    self.args.force_update = False
-                else:
-                    meta_file_obj.seek(0, 0)
+                with open(meta_file_path, 'r', encoding='utf-8') as meta_file_obj:
                     metainfo = json.load(meta_file_obj)
 
-                existing_files = []
+            known_files = [rec['file_path'] for rec in metainfo]
 
-                for d_path in data_paths:
-                    if os.path.isdir(d_path):
-                        dir_files = [os.path.join(d_path, file) for file in os.listdir(d_path)]
-                        existing_files.extend(dir_files)
-                    elif os.path.isfile(d_path):
-                        existing_files.append(os.path.abspath(d_path))
+            print_log('DEBUG: scanning data paths {}'.format(data_paths))
+            existing_files = []
+            META_UPDATED = False
 
-                print_log('DEBUG: existing files selected: \n{}'.format('\n'.join(existing_files)))
+            for d_path in data_paths:
+                if os.path.isdir(d_path):
+                    dir_files = [os.path.abspath(os.path.join(d_path, file)) \
+                                for file in os.listdir(d_path)]
+                    existing_files.extend(dir_files)
+                elif os.path.isfile(d_path):
+                    existing_files.append(os.path.abspath(d_path))
+                    
+            existing_files = [f for f in existing_files if f.endswith('.bz2')]
+            #data_fname_ptrn = re.compile('^[0-9]+[\.]{1}[0-9]{1}.*[\.wav\.bz2|\.tar\.bz2]{1}$')
+            #existing_files = [f for f in existing_files if re.match(data_fname_ptrn,f)]
+            existing_files = sorted(existing_files, 
+                key=lambda x: float(os.path.basename(x).split('.')[0]))
 
-                for data_file_path in existing_files:
+            new_files = [f for f in existing_files if f not in known_files]
+            
+            if new_files != []:
+                print_log('DEBUG: new files found: \n{}'.format('\n'.join(new_files)))
+                self.no_new_files = False
+            elif self.no_new_files == False:
+                print_log('DEBUG: no new files found')
+                self.no_new_files = True
 
-                    if data_file_path.endswith('.tar.bz2') \
-                        or data_file_path.endswith('.wav.bz2'):
+            for data_file_path in new_files:
 
-                        data_file_name = os.path.basename(data_file_path)
+                metainfo.append({
+                    'file_name': 'N/A',
+                    'file_path': data_file_path,
+                    'file_ext': 'N/A',
+                    'file_date': 'N/A',
+                    'file_size': 'N/A',
+                    'data_sent': 'N/A',
+                    'meta_generated': False,
+                    'meta_published': False,
+                    'data_processed': False,
+                    'vbot_published': False,
+                    'file_id': 'N/A',
+                    'file_url': None,
+                    'point_report_url': None,
+                    'equipment_report_url': None,
+                    'data_rms': 'N/A',
+                    'data_temperature': 'N/A',
+                    'data_status':'N/A',
+                    'preliminary_status':'N/A',
+                    'point_status':'N/A',
+                    'equipment_status':'N/A',
+                })
+                META_UPDATED = True
 
-                        if not any(data_file_name in rec['file_name'] for rec in metainfo):
-
-                            metainfo.append({
-                                'file_name': 'N/A',
-                                'file_path': data_file_path,
-                                'file_ext': 'N/A',
-                                'file_date': 'N/A',
-                                'file_size': 'N/A',
-                                'data_sent': 'N/A',
-                                'meta_generated': False,
-                                'meta_published': False,
-                                'data_processed': False,
-                                'vbot_published': False,
-                                'file_id': 'N/A',
-                                'file_url': None,
-                                'point_report_url': None,
-                                'equipment_report_url': None,
-                                'data_rms': 'N/A',
-                                'data_temperature': 'N/A',
-                                'data_status':'N/A',
-                                'preliminary_status':'N/A',
-                                'point_status':'N/A',
-                                'equipment_status':'N/A',
-                            })
-                            META_UPDATED = True
-
-                if META_UPDATED:
-                    meta_file_obj.seek(0, 0)
+            if META_UPDATED:
+                with open(meta_file_path, 'w', encoding='utf-8') as meta_file_obj:
                     json.dump(metainfo, meta_file_obj, ensure_ascii=False, indent=2, sort_keys=True)
-
-                return metainfo
+                
+            return metainfo
 
 
     def update_metainfo(self, metainfo):
@@ -329,7 +349,6 @@ class vbox_fiware_connector():
                     else:
                         print_log('ERROR: unknown raw data archive type!')
 
-
                     # calculate rms
                     t_start = time.time()
                     with wave.open(wav_file_path, 'rb') as waveFile:
@@ -345,7 +364,7 @@ class vbox_fiware_connector():
                                 byteorder='little', signed=True)
                             accum += sample_int ** 2
                         rms_value = math.sqrt(accum/frames_number) * self.sensivity_correction
-                    print_log('RMS calculation finished in {} sec'.format(time.time()-t_start))
+                    print_log('RMS calculation finished in {:.2f} sec'.format(time.time()-t_start))
                 except Exception as e:
                     print_log('ERROR: file processig failed! {}'.format(e))
                     rms_value = 'N/A'
@@ -382,9 +401,8 @@ class vbox_fiware_connector():
         if META_UPDATED:
             meta_file_path = os.path.join(self.root_dir, self.meta_name)
             with open(meta_file_path, 'w', encoding='utf-8') as meta_file_obj:
-                meta_file_obj.seek(0, 0)
                 json.dump(metainfo, meta_file_obj, ensure_ascii=False, indent=2, sort_keys=True)
-
+                
         return metainfo
 
 
@@ -393,20 +411,21 @@ class vbox_fiware_connector():
         META_UPDATED = False
         for i_rec, rec in enumerate(metainfo):
             if not rec['meta_published']:
-                print_log('DEBUG: sending meta for file {}'.format(rec['file_path']))
                 status_1, text = fiware_set_context(self.iota_host, self.iota_port1, 'sensor03', rec)
                 status_2, text = fiware_get_context(self.cb_host, self.cb_port)
                 if status_1 == 'OK' and status_1 == 'OK':
+                    print_log('DEBUG: sending meta OK for file {}'.format(rec['file_path']))
                     metainfo[i_rec]['meta_published'] = True
                     META_UPDATED = True
                     if not self.args.batch_processing:
                         break
+                else:
+                    print_log('DEBUG: sending meta FAIL for file {}'.format(rec['file_path']))
                 time.sleep(1) # avoid too frequent updates - cause missing some of them
 
         if META_UPDATED:
             meta_file_path = os.path.join(self.root_dir, self.meta_name)
             with open(meta_file_path, 'w', encoding='utf-8') as meta_file_obj:
-                meta_file_obj.seek(0, 0)
                 json.dump(metainfo, meta_file_obj, ensure_ascii=False, indent=2, sort_keys=True)
 
         return META_UPDATED
@@ -458,7 +477,7 @@ class vbox_fiware_connector():
                 metainfo = self.update_data_list(data_paths=sys.argv)
 
             else:
-                metainfo = self.update_data_list(data_paths=[self.root_dir])
+                metainfo = self.update_data_list(data_paths=[self.root_dir, self.data_dir])
             
             metainfo = self.update_metainfo(metainfo)
 
@@ -503,7 +522,7 @@ if __name__ == '__main__':
             vbox_fc.start_server()
 
     except KeyboardInterrupt:
-        # someone pressed ctr+c
+        # someone pressed ctrl+c
         print_log('Keyboard Interrupt (Ctrl+C)')
 
     except Exception as e:

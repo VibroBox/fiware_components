@@ -23,28 +23,19 @@ vcloud_fiware_connector или vweb_fiware_connector
 """
 
 
-# libs import from Vibrobox bot
 import os, sys, shutil, time
-import logging
-import ssl
 import requests
 import asyncio
 from aiohttp import web, ClientSession
 import aiohttp_cors
 import json
-import configparser
+import threading
+import re
 
-
-# libs import from vbox_fiware_connector
-import os, sys
+from vbxlib.logging import print_log, datetime_str
 from vbxlib.fiware_requests import *
 from vbxlib.network import ping_port as ping_port
 
-
-###
-import threading
-
-import re
 
 class vcloud_fiware_connector():
 
@@ -76,7 +67,7 @@ class vcloud_fiware_connector():
 
         # PARSE INPUT ARGS
         def wavs_are_in_start_args():
-            print('DEBUG: sys.argv == {}'.format(sys.argv))
+            print_log('DEBUG: sys.argv == {}'.format(sys.argv))
             return any(arg.endswith(ext) 
                        for arg in sys.argv 
                        for ext in self.data_types)
@@ -132,11 +123,11 @@ class vcloud_fiware_connector():
                 # the time reduce cpu usage of main thread, has no impact on finish time
                 time.sleep(30)
         except KeyboardInterrupt:
-            # someone pressed ctr+c
-            print('Inrerrupted by keyboard (Ctrl+C)!')
+            # someone pressed ctrl+c
+            print_log('Inrerrupted by keyboard (Ctrl+C)!')
         except Exception as e:
             # someone pressed ctr+c
-            print('EXCEPTION: {}'.format(e))
+            print_log('EXCEPTION: {}'.format(e))
         finally:
             # self.vcloud_fc_runner.cleanup()
             self.loop.call_soon_threadsafe(self.loop.stop)
@@ -144,7 +135,7 @@ class vcloud_fiware_connector():
     
     def ping_remotes(self):
 
-        print('\nINFO: checking fiware components...\n')
+        print_log('\nINFO: checking fiware components...\n')
 
         ping_port(self.db_host, self.db_port)
         ping_port(self.cb_host, self.cb_port)
@@ -172,8 +163,8 @@ class vcloud_fiware_connector():
     # Test the server is running by /hello url
     async def hello(self, request):
         greeting = 'vcloud_fc: Hello, World!'
-        print('Request: {}'.format(request.rel_url.human_repr()))
-        print('Headers: {}'.format(["{}:{}".format(k,v) for k,v in request.headers.items()]))
+        print_log('Request: {}'.format(request.rel_url.human_repr()))
+        print_log('Headers: {}'.format(["{}:{}".format(k,v) for k,v in request.headers.items()]))
         if 'Content-Type' in request.headers \
                 and 'application/json' in request.headers['Content-Type']:
             request_body_dict = await request.json()
@@ -209,12 +200,12 @@ class vcloud_fiware_connector():
             text += 'Tempeature: {} \n'.format(tmpr_str)
             text += 'Equipment status: {} \n'.format(equp_stat_str)
 
-            print('Json: {}'.format(request_body_dict))
+            print_log('Json: {}'.format(request_body_dict))
         else:
             request_body_dict = {}
             text = greeting
-            print('Json: no json payload found')
-        print('Response: {}'.format(greeting))
+            print_log('Json: no json payload found')
+        print_log('Response: {}'.format(greeting))
         
         name = 'Vbot service'
         #url = 'http://{}:{}{}'.format(host, port, endpoint)
@@ -230,7 +221,7 @@ class vcloud_fiware_connector():
         params_text = '&'.join('{}={}'.format(k, v) for k,v in params.items())
         url = 'http://{}:{}/api/v1/publish?{}'.\
             format(self.vbot_host, self.vbot_port, params_text)
-        print('Sending URL: {}'.format(url))
+        print_log('Sending URL: {}'.format(url))
         
         #responce = requests.post(url, data=json.dumps(payload), headers=headers)
         responce = requests.post(url, headers)
