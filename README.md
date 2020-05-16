@@ -1,3 +1,10 @@
+#It's highly recommended to set up automatic conversion of endlines for Linux users:
+git config --global core.autocrlf=input
+#Then Windows users should configue their git in thhis way:
+git config --global core.autocrlf=true
+
+
+
 # fiware_components
 reference components for vibrobox-fiware integration
 
