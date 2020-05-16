@@ -1,0 +1,10 @@
+name: fiware
+dependencies:
+  - python=3.7
+  - requests
+  - setuptools
+#  - aiohttp
+#  - aiohttp_cors
+  - pyinstaller
+  - wheel
+  - pip

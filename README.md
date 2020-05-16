@@ -134,6 +134,32 @@ a+x notification.sh
   
 4.6 call with the python 3:  
 
+4.6.1 Set up environment
+conda env create -f environment.yml
+conda activate fiware
+python -m pip freeze # See your packages.
+python -m pip install --ignore-installed aiohttp
+python -m pip install --ignore-installed aiohttp_cors
+conda deactivate
+
+4.6.2 Try to run evironment...
+
+conda activate fiware
+
+python ./vbox_fiware_connector.py --ping
+
+python ./vbox_fiware_connector.py --unsubscribe --subscribe --subscribe2
+
+python ./vbox_fiware_connector.py --reg-device
+
+python ./vbox_fiware_connector.py --send-once --test
+
+# if there are any data files in the / root dir /
+python ./vbox_fiware_connector.py --send_once
+conda deactivate
+
+
+
 ```
 ./python382x86/python.exe ./vbox_fiware_connector.py --ping
 

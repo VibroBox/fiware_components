@@ -1,3 +1,7 @@
+
+# Uncomment to trace/debug the script.
+# set -x
+
 URL=$1
 
 curl $URL -v -s -S --header 'Content-Type: application/json; charset=utf-8' --header 'Accept: application/json' --header "Fiware-Service: qsg" --header "Fiware-ServicePath: test" -d @- <<EOF

@@ -12,6 +12,7 @@
 /.env
 !/.env.prod
 !/docker-compose.yml
+!/environment.yml
 !/docker-compose-build-vbox-fc.yml
 !/dockerfile_vcloud_fiware_connector_run
 !/dockerfile_vbox_fiware_connector_build
